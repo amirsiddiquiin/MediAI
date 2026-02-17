@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const medicalRoutes = require('./routes/medical');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 app.use('/api/medical', medicalRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Medical Assistant API is running' });

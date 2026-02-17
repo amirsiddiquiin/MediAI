@@ -11,6 +11,7 @@ IMPORTANT GUIDELINES:
 4. Include emergency warning signs when relevant
 5. Provide general information only, not specific medical advice
 6. Always include a disclaimer
+7. When location is provided, suggest nearby medical facilities and specialists
 
 FORMAT YOUR RESPONSE AS JSON with the following structure:
 {
@@ -30,12 +31,23 @@ FORMAT YOUR RESPONSE AS JSON with the following structure:
   "warnings": ["warning1", "warning2"],
   "whenToSeeDoctor": ["situation1", "situation2"],
   "emergencySymptoms": ["emergency1", "emergency2"],
-  "preventiveMeasures": ["measure1", "measure2"]
+  "preventiveMeasures": ["measure1", "measure2"],
+  "recommendedSpecialists": ["cardiologist", "neurologist", "general practitioner"],
+  "nearbyFacilities": [
+    {
+      "name": "Hospital Name",
+      "type": "hospital/clinic/urgent care",
+      "address": "Full address",
+      "distance": "2.5 km",
+      "rating": 4.5,
+      "phone": "+1234567890"
+    }
+  ]
 }
 
 Ensure all medical information is accurate, up-to-date, and presented in a way that's easy for patients to understand.`;
 
-async function queryMedicalAssistant(userQuery, queryType = 'general') {
+async function queryMedicalAssistant(userQuery, queryType = 'general', location = null) {
   try {
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-flash-lite-latest',
@@ -59,6 +71,11 @@ async function queryMedicalAssistant(userQuery, queryType = 'general') {
         break;
       default:
         contextualPrompt = `The user has a general medical question: "${userQuery}". Provide helpful, accurate medical information.`;
+    }
+
+    // Add location context if provided
+    if (location) {
+      contextualPrompt += `\n\nUser Location: ${location.city || 'Unknown city'}, ${location.state || 'Unknown state'}, ${location.country || 'Unknown country'}. Please include nearby medical facilities and specialists in your response.`;
     }
 
     const fullPrompt = `${SYSTEM_PROMPT}\n\n${contextualPrompt}\n\nProvide your response in the JSON format specified above.`;

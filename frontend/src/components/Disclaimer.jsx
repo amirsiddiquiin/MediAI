@@ -2,19 +2,11 @@ import { AlertTriangle } from 'lucide-react'
 
 function Disclaimer() {
   return (
-    <div className="card bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 mb-8">
-      <div className="flex items-start space-x-3">
-        <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
-        <div>
-          <h3 className="text-lg font-bold text-amber-900 mb-2">
-            ⚕️ Important Medical Disclaimer
-          </h3>
-          <p className="text-gray-700 text-sm leading-relaxed">
-            This AI assistant provides <strong>general medical information only</strong> and does not replace professional medical advice, diagnosis, or treatment. 
-            Always consult with a qualified healthcare provider for any medical concerns. In case of emergency, call your local emergency services immediately.
-          </p>
-        </div>
-      </div>
+    <div className="flex items-center space-x-2 text-xs text-amber-400 bg-amber-900/20 border border-amber-800/50 rounded-lg px-3 py-2">
+      <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400" />
+      <p className="leading-tight text-amber-200">
+        <strong className="text-amber-300">Medical Disclaimer:</strong> This AI provides general information only. Always consult healthcare professionals for medical advice. Call emergency services for urgent care.
+      </p>
     </div>
   )
 }
