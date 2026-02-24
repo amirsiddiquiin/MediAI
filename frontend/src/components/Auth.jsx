@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Eye, EyeOff, User, Mail, Lock, Phone, Calendar, Heart, Activity } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 function Auth({ onAuthSuccess }) {
+  const { login } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -78,10 +80,8 @@ function Auth({ onAuthSuccess }) {
       const data = await response.json()
 
       if (data.success) {
-        // Store token and user data
-        localStorage.setItem('mediAI_token', data.token)
-        localStorage.setItem('mediAI_user', JSON.stringify(data.user))
-        onAuthSuccess(data.user, data.token)
+        // Use AuthContext login function to update state immediately
+        login(data.user, data.token)
       } else {
         setErrors({ general: data.message || 'Authentication failed' })
       }
