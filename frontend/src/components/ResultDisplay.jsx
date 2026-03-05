@@ -7,157 +7,189 @@ import {
   Activity,
   TrendingUp,
   Clock,
-  Brain,
-  Sparkles,
-  ChevronRight,
-  CheckCircle2,
+  CheckCircle,
   MapPin,
   Phone,
   Star,
   User,
-  Calendar
+  Heart,
+  Stethoscope
 } from 'lucide-react'
 
 function ResultDisplay({ result, loading }) {
-  if (loading) {
-    return null // Loading is handled in App.jsx
-  }
-
+  if (loading) return null
   if (!result) return null
 
-  const { data, disclaimer } = result
+  // Result is already the data object (overview, symptoms, etc.)
+  const data = result
+
+  // Check if there's any content to display
+  const hasContent = data && (
+    data.overview ||
+    data.possibleConditions?.length > 0 ||
+    data.symptoms?.length > 0 ||
+    data.causes?.length > 0 ||
+    data.riskFactors?.length > 0 ||
+    data.commonMedications?.length > 0 ||
+    data.warnings?.length > 0 ||
+    data.emergencySymptoms?.length > 0 ||
+    data.whenToSeeDoctor?.length > 0 ||
+    data.preventiveMeasures?.length > 0 ||
+    data.recommendedSpecialists?.length > 0 ||
+    data.nearbyFacilities?.length > 0
+  )
+
+  if (!hasContent) return null
 
   return (
-    <div className="space-y-8 animate-slide-up">
-      {/* Clean Header */}
-      <div className="flex items-center space-x-3 pb-4 border-b border-zinc-800">
-        <div className="w-6 h-6 bg-gradient-to-br from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
-          <Brain className="w-3 h-3 text-white" />
-        </div>
-        <span className="text-sm text-zinc-400">Medical Analysis</span>
-      </div>
-
-      {/* Overview Section */}
+    <div className="space-y-4">
+      {/* Overview - Primary Information */}
       {data.overview && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-blue-500/20 rounded flex items-center justify-center">
-              <Info className="w-3 h-3 text-blue-400" />
+        <div className="bg-gradient-to-br from-teal-500/10 to-blue-500/10 border border-teal-500/20 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Info className="w-5 h-5 text-teal-400" />
             </div>
-            <h3 className="text-sm font-medium text-zinc-300">Overview</h3>
-          </div>
-          <div className="pl-7">
-            <p className="text-zinc-200 leading-relaxed text-sm">{data.overview}</p>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-white mb-2">Overview</h3>
+              <p className="text-sm text-gray-300 leading-relaxed">{data.overview}</p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Possible Conditions */}
-      {data.possibleConditions && data.possibleConditions.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-purple-500/20 rounded flex items-center justify-center">
-              <Activity className="w-3 h-3 text-purple-400" />
+      {/* Emergency Alert - Show prominently if present */}
+      {data.emergencySymptoms?.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-red-400" />
             </div>
-            <h3 className="text-sm font-medium text-zinc-300">Possible Conditions</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.possibleConditions.map((condition, index) => (
-              <div key={index} className="flex items-center space-x-3 py-2 group">
-                <div className="w-6 h-6 bg-purple-500/10 rounded-full flex items-center justify-center text-xs text-purple-400 font-medium">
-                  {index + 1}
-                </div>
-                <span className="text-zinc-200 text-sm group-hover:text-zinc-100 transition-colors">{condition}</span>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-red-400 mb-3">Emergency Symptoms</h3>
+              <div className="space-y-2">
+                {data.emergencySymptoms.map((symptom, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm text-red-200">{symptom}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+              <p className="mt-3 text-xs text-red-400 font-medium bg-red-500/10 px-3 py-2 rounded-lg">
+                ⚠️ Seek immediate medical attention if experiencing these symptoms
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Symptoms */}
-      {data.symptoms && data.symptoms.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-blue-500/20 rounded flex items-center justify-center">
-              <TrendingUp className="w-3 h-3 text-blue-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">Common Symptoms</h3>
-          </div>
-          <div className="grid grid-cols-1 gap-2 pl-7">
-            {data.symptoms.map((symptom, index) => (
-              <div key={index} className="flex items-center space-x-2 py-1">
-                <ChevronRight className="w-3 h-3 text-blue-400" />
-                <span className="text-zinc-200 text-sm">{symptom}</span>
+      {/* Two Column Grid for Conditions & Symptoms */}
+      {(data.possibleConditions?.length > 0 || data.symptoms?.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Possible Conditions */}
+          {data.possibleConditions?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="w-5 h-5 text-purple-400" />
+                <h3 className="text-sm font-semibold text-white">Possible Conditions</h3>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Causes */}
-      {data.causes && data.causes.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-orange-500/20 rounded flex items-center justify-center">
-              <AlertCircle className="w-3 h-3 text-orange-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">Causes</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.causes.map((cause, index) => (
-              <div key={index} className="flex items-start space-x-2 py-1">
-                <span className="text-orange-400 mt-1 text-sm">•</span>
-                <span className="text-zinc-200 text-sm">{cause}</span>
+              <div className="space-y-2">
+                {data.possibleConditions.map((condition, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                    <span className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-medium text-purple-400">
+                      {index + 1}
+                    </span>
+                    <span className="text-sm text-gray-200">{condition}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Risk Factors */}
-      {data.riskFactors && data.riskFactors.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-yellow-500/20 rounded flex items-center justify-center">
-              <AlertTriangle className="w-3 h-3 text-yellow-400" />
             </div>
-            <h3 className="text-sm font-medium text-zinc-300">Risk Factors</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.riskFactors.map((factor, index) => (
-              <div key={index} className="flex items-center space-x-2 py-1">
-                <span className="text-yellow-400 mt-1 text-sm">⚠</span>
-                <span className="text-zinc-200 text-sm">{factor}</span>
+          )}
+
+          {/* Common Symptoms */}
+          {data.symptoms?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Heart className="w-5 h-5 text-red-400" />
+                <h3 className="text-sm font-semibold text-white">Common Symptoms</h3>
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap gap-2">
+                {data.symptoms.map((symptom, index) => (
+                  <span key={index} className="px-3 py-1.5 bg-red-500/10 text-red-300 border border-red-500/20 rounded-lg text-sm">
+                    {symptom}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Medications */}
-      {data.commonMedications && data.commonMedications.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-green-500/20 rounded flex items-center justify-center">
-              <Pill className="w-3 h-3 text-green-400" />
+      {/* Causes & Risk Factors */}
+      {(data.causes?.length > 0 || data.riskFactors?.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Causes */}
+          {data.causes?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-semibold text-white">Causes</h3>
+              </div>
+              <ul className="space-y-2">
+                {data.causes.map((cause, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full mt-2 flex-shrink-0"></span>
+                    {cause}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <h3 className="text-sm font-medium text-zinc-300">Common Medications</h3>
+          )}
+
+          {/* Risk Factors */}
+          {data.riskFactors?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-orange-400" />
+                <h3 className="text-sm font-semibold text-white">Risk Factors</h3>
+              </div>
+              <ul className="space-y-2">
+                {data.riskFactors.map((factor, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                    <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                    {factor}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Medications - Full Width */}
+      {data.commonMedications?.length > 0 && (
+        <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-sm font-semibold text-white">Common Medications</h3>
           </div>
-          <div className="space-y-4 pl-7">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {data.commonMedications.map((med, index) => (
-              <div key={index} className="space-y-2 pb-3 border-b border-zinc-800/50 last:border-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-zinc-100 text-sm">{med.name}</span>
-                  <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded-full">{med.type}</span>
+              <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/5">
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-sm font-medium text-white">{med.name}</span>
+                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                    {med.type}
+                  </span>
                 </div>
                 {med.purpose && (
-                  <p className="text-xs text-zinc-400">
-                    <span className="text-zinc-500">Purpose:</span> {med.purpose}
+                  <p className="text-xs text-gray-400 mb-1">
+                    <span className="text-gray-500">Purpose:</span> {med.purpose}
                   </p>
                 )}
                 {med.generalDosage && (
-                  <p className="text-xs text-zinc-400">
-                    <span className="text-zinc-500">Dosage:</span> {med.generalDosage}
+                  <p className="text-xs text-gray-400">
+                    <span className="text-gray-500">Dosage:</span> {med.generalDosage}
                   </p>
                 )}
               </div>
@@ -167,106 +199,76 @@ function ResultDisplay({ result, loading }) {
       )}
 
       {/* Warnings */}
-      {data.warnings && data.warnings.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-red-500/20 rounded flex items-center justify-center">
-              <AlertTriangle className="w-3 h-3 text-red-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">Important Warnings</h3>
+      {data.warnings?.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-5 h-5 text-amber-400" />
+            <h3 className="text-sm font-semibold text-amber-400">Important Warnings</h3>
           </div>
-          <div className="space-y-2 pl-7">
+          <ul className="space-y-2">
             {data.warnings.map((warning, index) => (
-              <div key={index} className="flex items-start space-x-2 py-2">
-                <CheckCircle2 className="w-3 h-3 text-red-400 mt-0.5" />
-                <span className="text-zinc-200 text-sm">{warning}</span>
-              </div>
+              <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                {warning}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* Emergency Symptoms */}
-      {data.emergencySymptoms && data.emergencySymptoms.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-red-500/20 rounded flex items-center justify-center animate-pulse">
-              <AlertCircle className="w-3 h-3 text-red-400" />
-            </div>
-            <h3 className="text-sm font-medium text-red-400">Emergency Symptoms</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.emergencySymptoms.map((symptom, index) => (
-              <div key={index} className="flex items-start space-x-2 py-2">
-                <span className="text-red-400 mt-0.5 text-sm font-bold">🚑</span>
-                <span className="text-red-200 text-sm font-medium">{symptom}</span>
+      {/* When to See Doctor & Preventive Measures */}
+      {(data.whenToSeeDoctor?.length > 0 || data.preventiveMeasures?.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* When to See Doctor */}
+          {data.whenToSeeDoctor?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Stethoscope className="w-5 h-5 text-blue-400" />
+                <h3 className="text-sm font-semibold text-white">When to See a Doctor</h3>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <ul className="space-y-2">
+                {data.whenToSeeDoctor.map((situation, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                    {situation}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      {/* When to See Doctor */}
-      {data.whenToSeeDoctor && data.whenToSeeDoctor.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-blue-500/20 rounded flex items-center justify-center">
-              <Clock className="w-3 h-3 text-blue-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">When to See a Doctor</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.whenToSeeDoctor.map((situation, index) => (
-              <div key={index} className="flex items-start space-x-2 py-2">
-                <span className="text-blue-400 mt-0.5 text-sm">👨‍⚕️</span>
-                <span className="text-zinc-200 text-sm">{situation}</span>
+          {/* Preventive Measures */}
+          {data.preventiveMeasures?.length > 0 && (
+            <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-5 h-5 text-teal-400" />
+                <h3 className="text-sm font-semibold text-white">Preventive Measures</h3>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Preventive Measures */}
-      {data.preventiveMeasures && data.preventiveMeasures.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-teal-500/20 rounded flex items-center justify-center">
-              <Shield className="w-3 h-3 text-teal-400" />
+              <ul className="space-y-2">
+                {data.preventiveMeasures.map((measure, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                    {measure}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <h3 className="text-sm font-medium text-zinc-300">Preventive Measures</h3>
-          </div>
-          <div className="space-y-2 pl-7">
-            {data.preventiveMeasures.map((measure, index) => (
-              <div key={index} className="flex items-start space-x-2 py-2">
-                <CheckCircle2 className="w-3 h-3 text-teal-400 mt-0.5" />
-                <span className="text-zinc-200 text-sm">{measure}</span>
-              </div>
-            ))}
-          </div>
+          )}
         </div>
       )}
 
       {/* Recommended Specialists */}
-      {data.recommendedSpecialists && data.recommendedSpecialists.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-indigo-500/20 rounded flex items-center justify-center">
-              <User className="w-3 h-3 text-indigo-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">Recommended Specialists</h3>
+      {data.recommendedSpecialists?.length > 0 && (
+        <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-5 h-5 text-purple-400" />
+            <h3 className="text-sm font-semibold text-white">Recommended Specialists</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-7">
+          <div className="flex flex-wrap gap-3">
             {data.recommendedSpecialists.map((specialist, index) => (
-              <div key={index} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 hover:bg-zinc-800/70 transition-all">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-indigo-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-zinc-100 text-sm">{specialist}</h4>
-                    <p className="text-xs text-zinc-400">Medical Specialist</p>
-                  </div>
-                </div>
+              <div key={index} className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <User className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-purple-200">{specialist}</span>
               </div>
             ))}
           </div>
@@ -274,50 +276,35 @@ function ResultDisplay({ result, loading }) {
       )}
 
       {/* Nearby Facilities */}
-      {data.nearbyFacilities && data.nearbyFacilities.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-green-500/20 rounded flex items-center justify-center">
-              <MapPin className="w-3 h-3 text-green-400" />
-            </div>
-            <h3 className="text-sm font-medium text-zinc-300">Nearby Medical Facilities</h3>
+      {data.nearbyFacilities?.length > 0 && (
+        <div className="bg-[#111] border border-white/10 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-sm font-semibold text-white">Nearby Medical Facilities</h3>
           </div>
-          <div className="space-y-3 pl-7">
+          <div className="space-y-3">
             {data.nearbyFacilities.map((facility, index) => (
-              <div key={index} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 hover:bg-zinc-800/70 transition-all">
+              <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/5">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-grow">
-                    <h4 className="font-medium text-zinc-100 text-sm">{facility.name}</h4>
-                    <p className="text-xs text-zinc-400 capitalize">{facility.type}</p>
+                  <div>
+                    <h4 className="text-sm font-medium text-white">{facility.name}</h4>
+                    <p className="text-xs text-gray-500 capitalize mt-0.5">{facility.type}</p>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                    <span className="text-xs text-zinc-300">{facility.rating}</span>
+                  <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded">
+                    <Star className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />
+                    <span className="text-xs text-amber-300 font-medium">{facility.rating}</span>
                   </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-xs text-zinc-400">
-                    <MapPin className="w-3 h-3" />
+                <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400" />
                     <span>{facility.address}</span>
-                    <span className="text-green-400">• {facility.distance}</span>
+                    <span className="text-emerald-400 font-medium">• {facility.distance}</span>
                   </div>
-                  
-                  <div className="flex items-center space-x-4 text-xs text-zinc-400">
-                    <div className="flex items-center space-x-1">
-                      <Phone className="w-3 h-3" />
-                      <span>{facility.phone}</span>
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{facility.phone}</span>
                   </div>
-                </div>
-
-                <div className="flex items-center space-x-2 pt-2 border-t border-zinc-700/50">
-                  <button className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs hover:bg-green-500/30 transition-colors">
-                    Get Directions
-                  </button>
-                  <button className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs hover:bg-blue-500/30 transition-colors">
-                    Call Now
-                  </button>
                 </div>
               </div>
             ))}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { MapPin, Search, User, Phone, Star, Calendar, ChevronRight } from 'lucide-react'
+import { MapPin, Search, User, Star, Calendar, Navigation, Loader2 } from 'lucide-react'
 
 function LocationDoctorSearch({ onDoctorSelect }) {
   const [location, setLocation] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [doctors, setDoctors] = useState([])
   const [specialty, setSpecialty] = useState('all')
@@ -19,95 +20,74 @@ function LocationDoctorSearch({ onDoctorSelect }) {
   ]
 
   useEffect(() => {
-    // Get user's location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Reverse geocoding to get city name (in real app, you'd use a geocoding API)
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          
-          // For demo purposes, let's set a default city based on coordinates
-          // In a real app, you'd use Google Maps Geocoding API
-          let city = 'Current Location';
-          let state = '';
-          let country = '';
-          
-          // Simple coordinate-based city detection (for demo)
-          if (lat > 40.7 && lat < 40.8 && lng > -74.1 && lng < -73.9) {
-            city = 'New York';
-            state = 'NY';
-            country = 'USA';
-          } else if (lat > 34.0 && lat < 34.2 && lng > -118.5 && lng < -118.2) {
-            city = 'Los Angeles';
-            state = 'CA';
-            country = 'USA';
-          } else if (lat > 41.8 && lat < 42.0 && lng > -87.7 && lng < -87.6) {
-            city = 'Chicago';
-            state = 'IL';
-            country = 'USA';
-          } else {
-            city = 'Current Location';
-          }
-          
-          setLocation({
-            lat: lat,
-            lng: lng,
-            city: city,
-            state: state,
-            country: country
-          });
-        },
-        (error) => {
-          console.log('Location access denied:', error)
-          // Set default location based on user preference or IP
-          setLocation({
-            lat: 40.7128,
-            lng: -74.0060,
-            city: 'New York',
-            state: 'NY',
-            country: 'USA'
-          })
-        }
-      )
-    } else {
-      // Browser doesn't support geolocation
-      setLocation({
-        lat: 40.7128,
-        lng: -74.0060,
-        city: 'New York',
-        state: 'NY',
-        country: 'USA'
-      })
+    const getLocation = async () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lat = position.coords.latitude
+            const lng = position.coords.longitude
+            
+            // Use OpenStreetMap Nominatim for reverse geocoding (free, no API key)
+            try {
+              const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`,
+                {
+                  headers: {
+                    'Accept-Language': 'en'
+                  }
+                }
+              )
+              const data = await response.json()
+              
+              const city = data.address?.city || 
+                          data.address?.town || 
+                          data.address?.municipality ||
+                          data.address?.county ||
+                          data.display_name?.split(',')[0] ||
+                          'Current Location'
+              const state = data.address?.state || ''
+              const country = data.address?.country || ''
+              
+              setLocation({ lat, lng, city, state, country })
+            } catch (error) {
+              console.error('Geocoding error:', error)
+              setLocation({ lat, lng, city: 'Current Location', state: '', country: '' })
+            }
+            setLocationLoading(false)
+          },
+          (error) => {
+            console.log('Location access denied:', error)
+            setLocation(null)
+            setLocationLoading(false)
+          },
+          { timeout: 10000, enableHighAccuracy: false }
+        )
+      } else {
+        setLocation(null)
+        setLocationLoading(false)
+      }
     }
+
+    getLocation()
   }, [])
 
   const searchDoctors = async () => {
     if (!location || !location.city) {
-      alert('Please enable location access or set your location manually')
       return
     }
 
     setLoading(true)
     try {
-      // Call your backend API
       const response = await fetch('/api/medical/nearby-doctors', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          location: location,
-          specialty: specialty
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location, specialty })
       })
       
       const data = await response.json()
       setDoctors(data.doctors)
       setSearchPerformed(true)
     } catch (error) {
-      console.error('Error searching doctors:', error)
-      // Use location-aware mock data if API fails
       const locationBasedDoctors = generateMockDoctors(location.city)
       setDoctors(locationBasedDoctors)
       setSearchPerformed(true)
@@ -116,7 +96,6 @@ function LocationDoctorSearch({ onDoctorSelect }) {
     }
   }
 
-  // Generate location-aware mock doctors
   const generateMockDoctors = (city) => {
     const baseDoctors = [
       {
@@ -159,47 +138,49 @@ function LocationDoctorSearch({ onDoctorSelect }) {
         phone: "+1-555-0234",
         availability: "Available next week"
       }
-    ];
+    ]
 
-    // Filter by specialty if needed
     if (specialty && specialty !== 'all') {
       return baseDoctors.filter(doctor => 
         doctor.specialty.toLowerCase().includes(specialty.toLowerCase())
-      );
+      )
     }
 
-    return baseDoctors;
+    return baseDoctors
   }
 
   return (
-    <div className="space-y-6">
-      {/* Location Header */}
-      <div className="flex items-center space-x-3 pb-4 border-b border-zinc-800">
-        <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-          <MapPin className="w-3 h-3 text-white" />
-        </div>
-        <span className="text-sm text-zinc-300">Find Doctors Near You</span>
-      </div>
-
-      {/* Location Info */}
-      <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50">
-        <div className="flex items-center space-x-3">
-          <MapPin className="w-4 h-4 text-zinc-400" />
-          <div>
-            <p className="text-sm text-zinc-200">
-              {location ? `${location.city}${location.state ? ', ' + location.state : ''}${location.country ? ', ' + location.country : ''}` : 'Detecting location...'}
-            </p>
-            <p className="text-xs text-zinc-500">Based on your current location</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Location */}
+      <div className="flex items-center gap-2 text-sm">
+        {locationLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
+            <span className="text-gray-400">Detecting your location...</span>
+          </>
+        ) : location ? (
+          <>
+            <Navigation className="w-4 h-4 text-teal-400" />
+            <span className="text-gray-300">
+              {location.city}
+              {location.state ? `, ${location.state}` : ''}
+              {location.country ? `, ${location.country}` : ''}
+            </span>
+          </>
+        ) : (
+          <>
+            <MapPin className="w-4 h-4 text-gray-500" />
+            <span className="text-gray-500">Location not available</span>
+          </>
+        )}
       </div>
 
       {/* Search Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex gap-2">
         <select
           value={specialty}
           onChange={(e) => setSpecialty(e.target.value)}
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-teal-500"
         >
           {specialties.map((spec) => (
             <option key={spec.value} value={spec.value}>
@@ -210,83 +191,58 @@ function LocationDoctorSearch({ onDoctorSelect }) {
         
         <button
           onClick={searchDoctors}
-          disabled={loading || !location}
-          className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center space-x-2"
+          disabled={loading || !location || locationLoading}
+          className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
         >
           {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent border-r-transparent animate-spin"></div>
-              <span>Searching...</span>
-            </>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           ) : (
-            <>
-              <Search className="w-4 h-4" />
-              <span>Search Doctors</span>
-            </>
+            <Search className="w-4 h-4" />
           )}
         </button>
       </div>
 
       {/* Results */}
       {searchPerformed && (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {doctors.length === 0 ? (
-            <div className="text-center py-8 text-zinc-400">
-              <MapPin className="w-12 h-12 mx-auto mb-4 text-zinc-500" />
-              <p className="text-sm">No doctors found matching your criteria</p>
-            </div>
+            <p className="text-center py-4 text-gray-500 text-sm">No doctors found</p>
           ) : (
-            <div className="space-y-3">
-              {doctors.map((doctor, index) => (
-                <div key={index} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-all cursor-pointer" onClick={() => onDoctorSelect && onDoctorSelect(doctor)}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-grow">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-white">{doctor.name}</h4>
-                          <p className="text-xs text-zinc-400">{doctor.specialty}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400" fill="currentColor" />
-                        <span className="text-sm text-zinc-300">{doctor.rating}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-xs text-zinc-400">
-                        <div className="w-4 h-4 bg-zinc-700 rounded flex items-center justify-center">
-                          <MapPin className="w-2 h-2 text-zinc-400" />
-                        </div>
-                        <span>{doctor.hospital}</span>
-                        <span className="text-green-400">• {doctor.distance}</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4 text-xs text-zinc-400">
-                        <div className="flex items-center space-x-1">
-                          <Phone className="w-3 h-3" />
-                          <span>{doctor.phone}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
-                          <span className={doctor.availability === 'Available today' ? 'text-green-400' : 'text-zinc-400'}>
-                            {doctor.availability}
-                          </span>
-                        </div>
+            doctors.map((doctor, index) => (
+              <button
+                key={index}
+                onClick={() => onDoctorSelect?.(doctor)}
+                className="w-full p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-left transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-teal-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-medium text-white truncate">{doctor.name}</h4>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Star className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />
+                        <span className="text-xs text-gray-300">{doctor.rating}</span>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-2 pt-3 border-t border-zinc-800">
-                      <ChevronRight className="w-4 h-4 text-zinc-400" />
-                      <span className="text-xs text-zinc-400">Click for details</span>
+                    <p className="text-xs text-gray-500">{doctor.specialty}</p>
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {doctor.distance}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span className={doctor.availability === 'Available today' ? 'text-emerald-400' : ''}>
+                          {doctor.availability}
+                        </span>
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </button>
+            ))
           )}
         </div>
       )}

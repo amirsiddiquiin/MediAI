@@ -1,47 +1,61 @@
-import { Heart, Stethoscope, Brain, Sparkles, User, LogOut, Zap } from 'lucide-react'
+import { Brain, Sparkles, User, Zap, Settings, Bell } from 'lucide-react'
 
 function Header({ user, onProfileClick }) {
   return (
-    <header className="bg-zinc-900 border-b border-zinc-800">
-      <div className="container mx-auto px-4 py-4">
+    <header className="bg-surface-900/80 backdrop-blur-xl border-b border-surface-800/50 sticky top-0 z-40">
+      <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
+          {/* Logo Section */}
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/25">
-                <Brain className="w-4 h-4 text-white" />
+            <div className="relative group">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-all duration-300">
+                <Brain className="w-5 h-5 text-white" />
               </div>
-              <div className="absolute -inset-1 bg-gradient-to-r from-violet-600 to-purple-600 rounded-lg blur opacity-25 animate-pulse"></div>
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">MediAI</h1>
-              <p className="text-xs text-zinc-500">Neural Network Active</p>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">MediAI</h1>
+              <div className="flex items-center space-x-1.5">
+                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                <p className="text-xs text-surface-500">AI Active</p>
+              </div>
             </div>
           </div>
           
+          {/* Right Section */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs text-zinc-400">Online</span>
+            {/* AI Badge */}
+            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-surface-800/50 rounded-full border border-surface-700/50">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs text-surface-300 font-medium">Gemini AI</span>
             </div>
             
+            {/* Status Indicator */}
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/30">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span className="text-xs text-emerald-400 font-medium">Online</span>
+            </div>
+            
+            {/* Notification Bell */}
+            <button className="relative p-2 text-surface-400 hover:text-white hover:bg-surface-800 rounded-lg transition-all">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-primary-500 rounded-full"></span>
+            </button>
+            
             {/* User Profile */}
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
-                <p className="text-sm text-zinc-200 font-medium">{user?.name || 'User'}</p>
-                <p className="text-xs text-zinc-500">Premium Member</p>
+            <button
+              onClick={onProfileClick}
+              className="flex items-center space-x-3 group"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-sm text-white font-medium group-hover:text-primary-400 transition-colors">{user?.name || 'User'}</p>
+                <p className="text-xs text-surface-500">Premium</p>
               </div>
               
-              <button
-                onClick={onProfileClick}
-                className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/25 hover:scale-105 transition-transform"
-              >
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 group-hover:scale-105 transition-all">
                 <User className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <div className="flex items-center space-x-2 text-xs text-zinc-500">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span>Gemini AI</span>
-            </div>
+              </div>
+            </button>
           </div>
         </div>
       </div>

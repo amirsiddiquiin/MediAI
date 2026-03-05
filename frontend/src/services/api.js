@@ -9,11 +9,12 @@ const api = axios.create({
   },
 })
 
-export const queryMedicalAssistant = async (query, queryType = 'general') => {
+export const queryMedicalAssistant = async (query, queryType = 'general', location = null) => {
   try {
     const response = await api.post('/medical/query', {
       query,
       queryType,
+      location,
     })
     return response.data
   } catch (error) {
